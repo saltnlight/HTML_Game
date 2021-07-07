@@ -54,14 +54,13 @@ Player.prototype.updateSpeed = function(){  //rewrite
     if(this.pressingUp){
       this.spdy -= this.maxSpeed;}
 }
-Player.prototype.playerUpdate = function(){
+Player.prototype.updatePlayer = function(){
     this.updateSpeed();
     this.update();
 }
 
 Player.onConnect = function(socket){
   new Player(250, 250, 0, 0, socket.id);
-
 
   socket.on('keyPress', function(data){
     for (let i in Player.list){
@@ -87,14 +86,52 @@ Player.onDisconnect = function(socket){
 Player.update = function() {
   let pack = [];
   for (let i in Player.list) {
-    var player = Player.list[i];
-    // player.handleKeypress(player);
-    player.playerUpdate();
-    // player.updatePosition();
+    let player = Player.list[i];
+    player.updatePlayer();
     pack.push({
       x: player.x,
       y: player.y,
       number: player.number
+    });
+  }
+  return pack;
+}
+
+function Bullet(x, y, spdx, spdy, id, angle) {
+    Entity.call(this, x, y, spdx, spdy, id);
+    this.angle = angle,
+    // this.id = Math.random();
+    // this.spdx = Math.cos(angle/ 180 * Math.PI)*10,
+    // this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
+    this.timer = 0,
+    this.toRemove = false,
+    Bullet.list[this.id] = this
+}
+Bullet.list = {};
+Bullet.prototype = Object.create(Entity.prototype);
+Bullet.prototype.constructor = Bullet;
+Bullet.prototype.updateBullet = function(){
+  this.spdx+=3;
+  this.spdy+=3;
+  if(this.timer++ > 100){this.toRemove = true;}
+  this.update();
+}
+
+Bullet.update = function() {
+  if(Math.random() < 0.1){
+    let id = Math.random();
+    let angle = Math.random()*360;
+    let spdx = Math.cos(angle/ 180 * Math.PI)*10;
+    let spdy = Math.sin(angle/ 180 * Math.PI)*10;
+    new Bullet(150, 150, spdx, spdy, id, angle);
+  }
+  let pack = [];
+  for (let i in Bullet.list) {
+    let bullet = Bullet.list[i];
+    bullet.updateBullet();
+    pack.push({
+      x: bullet.x,
+      y: bullet.y
     });
   }
   return pack;
@@ -116,7 +153,10 @@ io.sockets.on('connection', function(socket) {
 });
 
 setInterval(function() {
-  let pack = Player.update();
+  let pack = {
+    player : Player.update(),
+    bullet : Bullet.update()
+  };
   for (let i in socket_List){
     let socket = socket_List[i];
     socket.emit('newPosition', pack);
