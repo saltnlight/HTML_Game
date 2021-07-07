@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <style media="screen">
+      #canva {
+        width:500px;
+        height:500px;
+        border:1px solid blue;
+      }
+
+    </style>
+  </head>
+  <body>
+    <canvas id="canva" width="300" height="300"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script type="text/javascript">
+      const CTX = document.querySelector('#canva').getContext('2d');
+      CTX.font = '30px Arial';
+
+      const socket = io();
+
+      socket.on('newPosition', function(data) {
+        CTX.clearRect(0,0,500,500);
+        CTX.fillText(A, 2, 2);
+        for (let i = 0; i < data.length; i++) {
+          CTX.fillText(data[i].number, data[i].x, data[i].y);
+        }
+      });
+
+      // moves PLAYER notify keypress actions
+      document.onkeydown = function(e){
+          let code = e.keyCode;
+          if(code === 68) {
+            socket.emit('keyPress', {inputID:'right', state:true});
+          }
+          if(code === 83) {
+            socket.emit('keyPress', {inputID:'down', state:true});
+          }
+          if(code === 65) {
+            socket.emit('keyPress', {inputID:'left', state:true});
+          }
+          if(code === 87) {
+            socket.emit('keyPress', {inputID:'up', state:true});
+          }
+      }
+
+      document.onkeyup = function(e){
+          let code = e.keyCode;
+          if(code === 68) {
+            socket.emit('keyPress', {inputID:'right', state:false});
+          }
+          if(code === 83) {
+            socket.emit('keyPress', {inputID:'down', state:false});
+          }
+          if(code === 65) {
+            socket.emit('keyPress', {inputID:'left', state:false});
+          }
+          if(code === 87) {
+            socket.emit('keyPress', {inputID:'up', state:false});
+          }
+      }
+    </script>
+  </body>
+</html>
