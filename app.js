@@ -1,4 +1,9 @@
 // 'use strict'
+const mongo = require('mongojs');
+var db = mongo('localhost:27017/myGame', ['players', 'Progress']);
+
+// db.Players.insert({username:'tester',password:'qaz'});
+
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -6,7 +11,6 @@ const port = 2000;
 var serv = require('http').Server(app);
 
 app.get('/',function(req, res) {
-  // res.sendFile('/Users/PROMISE/WebProjects/HTML\ Games/multi_player/client/index.html');
   res.sendFile(path.join(__dirname,"client/index.html"));
 });
 app.use('/client', express.static(__dirname + '/client'));
@@ -167,22 +171,25 @@ var USERS = {
     'flora' : 'qaz',
     'reda' : 'wsx'
 };
-
-const addUser = function (data, cb) {
-  setTimeout(function () {
-    USERS[data.username] = data.password;
-    cb();
-  }, 10)
+const isValidPassword = function (data, cb) {
+  db.Player.find({username:data.username, password:data.password}, function (err, res) {
+    if (res.length>0) { cb(true);}
+    else { cb(false); }    // cb(USERS[data.username] === data.password);
+  });
 }
 const isUsernameTaken = function (data, cb) {
-  setTimeout(function () {
-    cb(USERS.hasOwnProperty(data.username));
-  }, 10)
+  db.Player.find({username:data.username}, function (err, res) {
+    if (res.length>0) {
+      cb(true);
+    } else {
+      cb(false)
+    }
+  });
 }
-const isValidPassword = function (data, cb) {
-  setTimeout(function () {
-    cb(USERS[data.username] === data.password);
-  }, 10)
+const addUser = function (data, cb) {
+  db.Player.insert({username:data.username, password:data.password}, function (err) {
+    cb();
+  });
 }
 
 var io = require('socket.io')(serv, {});
@@ -193,7 +200,7 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('signIn', function(data) {
     isValidPassword(data, function(res) {
-      if (res) {
+      if(res) {
         Player.onConnect(socket);
         socket.emit('sigInResponse', {success:true});
       } else {
@@ -213,7 +220,7 @@ io.sockets.on('connection', function(socket) {
       }
     });
   });
-  
+
   socket.on('disconnect', function(){
     delete socket_List[socket.id];
     Player.onDisconnect(socket);

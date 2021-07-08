@@ -68,10 +68,12 @@
     }
     socket.on('sigInResponse', function (data) {
       if (data.success) {
+        console.log(data.success);
         SIGNDIV.style.display = 'none';
         GAME.style.display = 'inline-block';
         NOGAME.style.display = 'none';
       } else {
+        console.log(data.success);
         NOGAME.style.display = 'block';
       }
     });
