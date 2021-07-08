@@ -9,30 +9,84 @@
         height:500px;
         border:1px solid blue;
       }
-      div{
+      #chat-text{
         width: 500px;
         height: 100px;
         overflow-y: scroll;
       }
-      input{
+      input > #chat-input{
         width: 500px;
       }
+      /* #sign-up{color: red;} */
     </style>
   </head>
   <body>
-    <canvas id="canva" width="300" height="300"></canvas>
+    <section id="signDiv">
+      <div id="uNameDiv" class="">
+        Username: <input id="username" type="text" name="username" value="" required>
+      </div>
+      <div id="pWordDiv" class="">
+        Password: <input id="password" type="password" name="password" value="" required>
+      </div>
+      <div id="buttonDiv" class="">
+        <button id="sign-in" type="button" name="button">Sign In</button>
+        <button id="sign-up" type="button" name="button">Sign Up</button>
+      </div>
+    </section>
 
-    <div id="chat-text">
-      <p>Hello</p>
-    </div>
-<!--  onsubmit="myFunction()" -->
-    <form id="chat-form">
-      <input id="chat-input" type="text" name="" value="">
-      <!-- <button id="chat-button" type="submit" name="button">send</button> -->
-    </form>
+    <section id="game" style="display:none; ">
+      <canvas id="canva" width="300" height="300"></canvas>
+
+      <div id="chat-text">
+        <p>Hello</p>
+      </div>
+
+      <form id="chat-form">
+        <input id="chat-input" type="text" name="" value="">
+      </form>
+    </section>
+
+    <section id="no-game" style="display:none; ">
+      <div class="">Sign-in unsuccessful</div>
+    </section>
 
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
+
+    const socket = io();
+//***************************sign-in**********************************************
+    const SIGNDIV = document.querySelector('#signDiv');
+    const UNAME = document.querySelector('#username');
+    const PWORD = document.querySelector('#password');
+    const SIGNIN = document.querySelector('#sign-in');
+    const SIGNUP = document.querySelector('#sign-up');
+    const GAME = document.querySelector('#game');
+    const NOGAME = document.querySelector('#no-game');
+
+    SIGNIN.onclick = function () {
+      socket.emit('signIn', {username:UNAME.value, password:PWORD.value});
+    }
+    socket.on('sigInResponse', function (data) {
+      if (data.success) {
+        SIGNDIV.style.display = 'none';
+        GAME.style.display = 'inline-block';
+        NOGAME.style.display = 'none';
+      } else {
+        NOGAME.style.display = 'block';
+      }
+    });
+
+    SIGNUP.onclick = function () {
+      socket.emit('signUp', {username:UNAME.value, password:PWORD.value});
+    }
+    socket.on('signUpResponse', function (data) {
+      if (data.success) {
+        alert('Sign Up Successful');
+      } else {
+        alert('Sign Up Unsuccessful');
+      }
+    });
+//*************************game************************************************
       const CANVA = document.querySelector('#canva');
       const CTX = document.querySelector('#canva').getContext('2d');
       CTX.font = '30px Arial';
@@ -40,9 +94,7 @@
       const chatText = document.querySelector('#chat-text');
       const chatForm = document.querySelector('#chat-form');
       const chatInput = document.querySelector('#chat-input');
-      const chatButton = document.querySelector('#chat-button');
 
-      const socket = io();
 
       socket.on('newPosition', function(data) {
         CTX.clearRect(0,0,500,500);

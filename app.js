@@ -163,14 +163,57 @@ Bullet.update = function() {
   return pack;
 }
 
+var USERS = {
+    'flora' : 'qaz',
+    'reda' : 'wsx'
+};
+
+const addUser = function (data, cb) {
+  setTimeout(function () {
+    USERS[data.username] = data.password;
+    cb();
+  }, 10)
+}
+const isUsernameTaken = function (data, cb) {
+  setTimeout(function () {
+    cb(USERS.hasOwnProperty(data.username));
+  }, 10)
+}
+const isValidPassword = function (data, cb) {
+  setTimeout(function () {
+    cb(USERS[data.username] === data.password);
+  }, 10)
+}
+
 var io = require('socket.io')(serv, {});
 io.sockets.on('connection', function(socket) {
   console.log("socket connection");
   socket.id = Math.random();
   socket_List[socket.id] = socket;
 
-  Player.onConnect(socket);
+  socket.on('signIn', function(data) {
+    isValidPassword(data, function(res) {
+      if (res) {
+        Player.onConnect(socket);
+        socket.emit('sigInResponse', {success:true});
+      } else {
+        socket.emit('sigInResponse', {success:false});
+      }
+    });
+  });
 
+  socket.on('signUp', function(data) {
+    isUsernameTaken(data, function(res) {
+      if (res) {
+        socket.emit('signUpResponse', {success:false});
+      } else {
+        addUser(data, function () {
+          socket.emit('signUpResponse', {success:true});
+        });
+      }
+    });
+  });
+  
   socket.on('disconnect', function(){
     delete socket_List[socket.id];
     Player.onDisconnect(socket);
