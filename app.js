@@ -1,4 +1,4 @@
-'use strict'
+// 'use strict'
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -15,12 +15,12 @@ console.log("server started");
 
 var socket_List = {};
 
-function Entity(x, y, spdx, spdy, id) {
-    this.x = x,
-    this.y = y,
-    this.spdx = spdx,
-    this.spdy = spdy,
-    this.id = id
+function Entity() {
+    this.x = 250,
+    this.y = 250,
+    this.spdx = 0,
+    this.spdy = 0,
+    this.id = ""
 }
 Entity.prototype.updatePosition = function() {
     this.x += this.spdx;
@@ -30,14 +30,20 @@ Entity.prototype.updatePosition = function() {
 Entity.prototype.update = function() {
     this.updatePosition();
 };
+Entity.prototype.getDistance = function(pt) {
+  return Math.sqrt( Math.pow(this.x-pt.x, 2) + Math.pow(this.y-pt.y, 2) );
+};
 
-function Player(x, y, spdx, spdy, id) {
-    Entity.call(this, x, y, spdx, spdy, id);
+function Player(id) {
+    Entity.call(this);
+    this.id = id,
     this.number = "" + Math.floor(10 * Math.random()),
     this.pressingUp = false,
     this.pressingDown = false,
     this.pressingLeft = false,
     this.pressingRight = false,
+    this.pressingAttack = false,
+    this.mouseAngle = 0,
     this.maxSpeed = 5,
     Player.list[this.id] = this
 }
@@ -54,13 +60,22 @@ Player.prototype.updateSpeed = function(){  //rewrite
     if(this.pressingUp){
       this.spdy -= this.maxSpeed;}
 }
+Player.prototype.shoot = function(angle){
+  b = new Bullet(this.id, angle);
+  b.x = this.x;
+  b.y = this.y;
+  return b;
+}
 Player.prototype.updatePlayer = function(){
-    this.updateSpeed();
-    this.update();
+  this.updateSpeed();
+  this.update();
+  if (this.pressingAttack) {
+    this.shoot(this.mouseAngle);
+  }
 }
 
 Player.onConnect = function(socket){
-  new Player(250, 250, 0, 0, socket.id);
+  new Player(socket.id);
 
   socket.on('keyPress', function(data){
     for (let i in Player.list){
@@ -76,6 +91,12 @@ Player.onConnect = function(socket){
       }
       if(player.id === socket.id && data.inputID === 'up'){
         player.pressingUp = data.state;
+      }
+      if(player.id === socket.id && data.inputID === 'attack'){
+        player.pressingAttack = data.state;
+      }
+      if(player.id === socket.id && data.inputID === 'mouseAngle'){
+        player.mouseAngle = data.state;
       }
     }
   });
@@ -97,12 +118,13 @@ Player.update = function() {
   return pack;
 }
 
-function Bullet(x, y, spdx, spdy, id, angle) {
-    Entity.call(this, x, y, spdx, spdy, id);
+function Bullet(parent, angle) {
+    Entity.call(this);
+    this.parent = parent,
     this.angle = angle,
-    // this.id = Math.random();
-    // this.spdx = Math.cos(angle/ 180 * Math.PI)*10,
-    // this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
+    this.id = Math.random(),
+    this.spdx = Math.cos(angle/ 180 * Math.PI)*10,
+    this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
     this.timer = 0,
     this.toRemove = false,
     Bullet.list[this.id] = this
@@ -115,24 +137,28 @@ Bullet.prototype.updateBullet = function(){
   this.spdy+=3;
   if(this.timer++ > 100){this.toRemove = true;}
   this.update();
+  for(let i in Player.list){
+    let p = Player.list[i];
+    if(this.getDistance(p) < 16 && this.parent !== p.id){
+      this.toRemove = true;
+      //handle collision effect
+    }
+  }
 }
 
 Bullet.update = function() {
-  if(Math.random() < 0.1){
-    let id = Math.random();
-    let angle = Math.random()*360;
-    let spdx = Math.cos(angle/ 180 * Math.PI)*10;
-    let spdy = Math.sin(angle/ 180 * Math.PI)*10;
-    new Bullet(150, 150, spdx, spdy, id, angle);
-  }
   let pack = [];
   for (let i in Bullet.list) {
     let bullet = Bullet.list[i];
     bullet.updateBullet();
-    pack.push({
-      x: bullet.x,
-      y: bullet.y
-    });
+    if (bullet.toRemove) {
+      delete Bullet.list[i];
+    } else {
+      pack.push({
+        x: bullet.x,
+        y: bullet.y
+      });
+    }
   }
   return pack;
 }
@@ -140,7 +166,6 @@ Bullet.update = function() {
 var io = require('socket.io')(serv, {});
 io.sockets.on('connection', function(socket) {
   console.log("socket connection");
-
   socket.id = Math.random();
   socket_List[socket.id] = socket;
 
@@ -150,6 +175,19 @@ io.sockets.on('connection', function(socket) {
     delete socket_List[socket.id];
     Player.onDisconnect(socket);
   });
+
+  socket.on('msgToServer', function(data){
+    let playerName = ('' + socket.id).slice(2,7);
+    for (let i in socket_List) {
+      socket_List[i].emit('addToChat', playerName +': '+ data)
+    }
+  });
+
+  socket.on('evalServer', function(data){
+    let res = eval(data);
+    socket.emit('evalRes', res);
+  });
+
 });
 
 setInterval(function() {
@@ -161,7 +199,6 @@ setInterval(function() {
     let socket = socket_List[i];
     socket.emit('newPosition', pack);
   }
-
 }, 1000/25);
 
 // handling multiple players at the same time with a listen

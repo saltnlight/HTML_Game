@@ -9,17 +9,38 @@
         height:500px;
         border:1px solid blue;
       }
-
+      div{
+        width: 500px;
+        height: 100px;
+        overflow-y: scroll;
+      }
+      input{
+        width: 500px;
+      }
     </style>
   </head>
   <body>
     <canvas id="canva" width="300" height="300"></canvas>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <div id="chat-text">
+      <p>Hello</p>
+    </div>
+<!--  onsubmit="myFunction()" -->
+    <form id="chat-form">
+      <input id="chat-input" type="text" name="" value="">
+      <!-- <button id="chat-button" type="submit" name="button">send</button> -->
+    </form>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
+      const CANVA = document.querySelector('#canva');
       const CTX = document.querySelector('#canva').getContext('2d');
       CTX.font = '30px Arial';
+
+      const chatText = document.querySelector('#chat-text');
+      const chatForm = document.querySelector('#chat-form');
+      const chatInput = document.querySelector('#chat-input');
+      const chatButton = document.querySelector('#chat-button');
 
       const socket = io();
 
@@ -29,11 +50,38 @@
           CTX.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
         }
         for (let i = 0; i < data.bullet.length; i++) {
-          CTX.fillRect(data.bullet[i].x-5, data.bullet[i].y-5, 10, 10);
+          CTX.fillRect(data.bullet[i].x-2.5, data.bullet[i].y-2.5, 5, 5);
         }
       });
 
-      // moves PLAYER notify keypress actions
+      socket.on('addToChat', function(data) {
+        let p = document.createElement("P");
+        let text = document.createTextNode(data);
+        p.appendChild(text);
+        chatText.appendChild(p);
+        // chatText.innerHTML = data;
+      });
+
+      socket.on('evalRes', function(data) {
+        console.log(data);
+      });
+
+      chatForm.onsubmit = function(e) {
+        e.preventDefault();
+        if(chatInput.value[0] === '/'){
+          socket.emit('evalServer', chatInput.value.slice(1));
+          chatInput.value = '';
+        } else {
+          socket.emit('msgToServer', chatInput.value);
+          chatInput.value = '';
+        }
+      };
+      // chatForm.addEventListener('submit', function(e) {
+      //   e.preventDefault();
+      //   socket.emit('msgToServer', chatInput.value);
+      //   chatInput.value = '';
+      // });
+      // // moves PLAYER notify keypress actions
       document.onkeydown = function(e){
           let code = e.keyCode;
           if(code === 68) {
@@ -65,6 +113,17 @@
             socket.emit('keyPress', {inputID:'up', state:false});
           }
       }
+
+      CANVA.onmousedown = function(e){socket.emit('keyPress', {inputID:'attack', state:true});}
+
+      CANVA.onmouseup = function(e){socket.emit('keyPress', {inputID:'attack', state:false});}
+
+      CANVA.onmousemove = function(e) {
+          let x = 250 + e.clientX - 8;
+          let y = 250 + e.clientY - 8;
+          let angle = Math.atan2(y, x)/ Math.PI * 180;
+          socket.emit('keyPress', {inputID:'mouseAngle', state:angle});
+      };
     </script>
   </body>
 </html>
