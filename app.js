@@ -49,13 +49,12 @@ function Player(id) {
     this.pressingAttack = false,
     this.mouseAngle = 0,
     this.maxSpeed = 5,
+    this.maxSpd = 10,
+  	this.hp = 10,
+  	this.hpMax = 10,
+  	this.score = 0,
     Player.list[this.id] = this,
-    initPack.player.push({
-      id:this.id,
-      number:this.number,
-  		x:this.x,
-  		y:this.y
-    })
+    initPack.player.push(this.getInitPack())
 }
 Player.list = {}
 Player.prototype = Object.create(Entity.prototype);
@@ -70,12 +69,6 @@ Player.prototype.updateSpeed = function(){  //rewrite
     if(this.pressingUp){
       this.spdy -= this.maxSpeed;}
 }
-Player.prototype.shoot = function(angle){
-  b = new Bullet(this.id, angle);
-  b.x = this.x;
-  b.y = this.y;
-  return b;
-}
 Player.prototype.updatePlayer = function(){
   this.updateSpeed();
   this.update();
@@ -83,7 +76,47 @@ Player.prototype.updatePlayer = function(){
     this.shoot(this.mouseAngle);
   }
 }
+Player.prototype.getInitPack = function(){
+  return {
+    id:this.id,
+    x:this.x,
+    y:this.y,
+    number:this.number,
+    hp:this.hp,
+    hpMax:this.hpMax,
+    score:this.score
+  };
+};
+Player.prototype.getUpdatePack = function(){
+		return {
+			id:this.id,
+			x:this.x,
+			y:this.y,
+			hp:this.hp,
+			score:this.score,
+		}
+};
+Player.prototype.shoot = function(angle){
+  b = new Bullet(this.id, angle);
+  b.x = this.x;
+  b.y = this.y;
+  return b;
+}
 
+Player.update = function() {
+  let pack = [];
+  for (let i in Player.list) {
+    let player = Player.list[i];
+    player.updatePlayer();
+    pack.push(player.getUpdatePack());
+  }
+  return pack;
+}
+Player.getAllInitPack = function(){
+	let players = [];
+	for(let i in Player.list){ players.push(Player.list[i].getInitPack()); }
+	return players;
+}
 Player.onConnect = function(socket){
   new Player(socket.id);
 
@@ -110,23 +143,15 @@ Player.onConnect = function(socket){
       }
     }
   });
+
+  socket.emit('init',{
+		player:Player.getAllInitPack(),
+		bullet:Bullet.getAllInitPack(),
+	});
 }
 Player.onDisconnect = function(socket){
   delete Player.list[socket.id];
   removePack.player.push([socket.id]);
-}
-Player.update = function() {
-  let pack = [];
-  for (let i in Player.list) {
-    let player = Player.list[i];
-    player.updatePlayer();
-    pack.push({
-      id: player.id,
-      x: player.x,
-      y: player.y
-    });
-  }
-  return pack;
 }
 
 function Bullet(parent, angle) {
@@ -139,11 +164,7 @@ function Bullet(parent, angle) {
     this.timer = 0,
     this.toRemove = false,
     Bullet.list[this.id] = this,
-    initPack.bullet.push({
-      id:this.id,
-  		x:this.x,
-  		y:this.y,
-    })
+    initPack.bullet.push(this.getInitPack())
 }
 Bullet.list = {};
 Bullet.prototype = Object.create(Entity.prototype);
@@ -156,11 +177,32 @@ Bullet.prototype.updateBullet = function(){
   for(let i in Player.list){
     let p = Player.list[i];
     if(this.getDistance(p) < 16 && this.parent !== p.id){
-      this.toRemove = true;
-      //handle collision effect
+      p.hp -= 1;
+			if(p.hp <= 0){
+				let shooter = Player.list[this.parent];
+				if(shooter){ shooter.score += 1; }
+				p.hp = p.hpMax;
+				p.x = Math.random() * 500;
+				p.y = Math.random() * 500;
+			}
+      // this.toRemove = true;
     }
   }
 }
+Bullet.prototype.getInitPack = function(){
+  return {
+    id:this.id,
+    x:this.x,
+    y:this.y
+  };
+};
+Bullet.prototype.getUpdatePack = function(){
+		return {
+			id:this.id,
+			x:this.x,
+			y:this.y
+		}
+};
 
 Bullet.update = function() {
   let pack = [];
@@ -171,14 +213,15 @@ Bullet.update = function() {
       delete Bullet.list[i];
       removePack.bullet.push(bullet.id);
     } else {
-      pack.push({
-        id: bullet.id,
-        x: bullet.x,
-        y: bullet.y
-      });
+      pack.push(bullet.getUpdatePack());
     }
   }
   return pack;
+}
+Bullet.getAllInitPack = function(){
+	let bullets = [];
+	for(let i in Bullet.list){ bullets.push(Bullet.list[i].getInitPack()); }
+	return bullets;
 }
 
 const isValidPassword = function (data, cb) {
