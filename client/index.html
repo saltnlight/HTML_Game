@@ -88,25 +88,11 @@
         alert('Sign Up Unsuccessful');
       }
     });
-//*************************game************************************************
-      const CANVA = document.querySelector('#canva');
-      const CTX = document.querySelector('#canva').getContext('2d');
-      CTX.font = '30px Arial';
 
+//*************************chat************************************************
       const chatText = document.querySelector('#chat-text');
       const chatForm = document.querySelector('#chat-form');
       const chatInput = document.querySelector('#chat-input');
-
-
-      socket.on('newPosition', function(data) {
-        CTX.clearRect(0,0,500,500);
-        for (let i = 0; i < data.player.length; i++) {
-          CTX.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
-        }
-        for (let i = 0; i < data.bullet.length; i++) {
-          CTX.fillRect(data.bullet[i].x-2.5, data.bullet[i].y-2.5, 5, 5);
-        }
-      });
 
       socket.on('addToChat', function(data) {
         let p = document.createElement("P");
@@ -135,7 +121,89 @@
       //   socket.emit('msgToServer', chatInput.value);
       //   chatInput.value = '';
       // });
-      // // moves PLAYER notify keypress actions
+
+//*************************game************************************************
+      const CANVA = document.querySelector('#canva');
+      const CTX = document.querySelector('#canva').getContext('2d');
+      CTX.font = '30px Arial';
+
+      function Player(initPack) {
+        this.id = initPack.id,
+        this.number = initPack.number,
+        this.x = initPack.x,
+        this.y = initPack.y,
+        Player.list[this.id] = this
+      }
+      Player.list = {}
+
+      function Bullet(initPack){
+    		this.id = initPack.id,
+    		this.x = initPack.x,
+    		this.y = initPack.y,
+    		Bullet.list[this.id] = this
+    	}
+    	Bullet.list = {};
+
+      socket.on('init', function(data) {
+        //{ player : [{id:123,number:'1',x:0,y:0},{id:1,number:'2',x:0,y:0}], bullet: []}
+        for(var i = 0 ; i < data.player.length; i++){
+    			new Player(data.player[i]);
+          console.log('checkkkk');
+          console.log(Player.list[i].id);
+    		}
+    		for(var i = 0 ; i < data.bullet.length; i++){
+    			new Bullet(data.bullet[i]);
+    		}
+      });
+
+      socket.on('update',function(data){
+        //{ player : [{id:123,x:0,y:0},{id:1,x:0,y:0}], bullet: []}
+        for(let i = 0 ; i < data.player.length; i++){
+          let pack = data.player[i];
+          let p = Player.list[pack.id];
+          if(p){
+            if(pack.x !== undefined){ p.x = pack.x; }
+            if(pack.y !== undefined){ p.y = pack.y; }
+          }
+        }
+        for(let i = 0 ; i < data.bullet.length; i++){
+          let pack = data.bullet[i];
+          let b = Bullet.list[data.bullet[i].id];
+          if(b){
+            if(pack.x !== undefined){ b.x = pack.x; }
+            if(pack.y !== undefined){ b.y = pack.y; }
+          }
+        }
+      });
+
+      socket.on('remove',function(data){
+    		//{player:[12323],bullet:[12323,123123]}
+    		for(let i = 0 ; i < data.player.length; i++){
+    			delete Player.list[data.player[i]];
+    		}
+    		for(let i = 0 ; i < data.bullet.length; i++){
+    			delete Bullet.list[data.bullet[i]];
+    		}
+    	});
+
+      setInterval(function(){
+    		CTX.clearRect(0,0,500,500);
+    		for(var i in Player.list)
+    			CTX.fillText(Player.list[i].number,Player.list[i].x,Player.list[i].y);
+    		for(var i in Bullet.list)
+    			CTX.fillRect(Bullet.list[i].x-5,Bullet.list[i].y-5,10,10);
+    	},40);
+      // socket.on('newPosition', function(data) {
+      //   CTX.clearRect(0,0,500,500);
+      //   for (let i = 0; i < data.player.length; i++) {
+      //     CTX.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
+      //   }
+      //   for (let i = 0; i < data.bullet.length; i++) {
+      //     CTX.fillRect(data.bullet[i].x-2.5, data.bullet[i].y-2.5, 5, 5);
+      //   }
+      // });
+
+      // moves PLAYER notify keypress actions
       document.onkeydown = function(e){
           let code = e.keyCode;
           if(code === 68) {

@@ -49,7 +49,13 @@ function Player(id) {
     this.pressingAttack = false,
     this.mouseAngle = 0,
     this.maxSpeed = 5,
-    Player.list[this.id] = this
+    Player.list[this.id] = this,
+    initPack.player.push({
+      id:this.id,
+      number:this.number,
+  		x:this.x,
+  		y:this.y
+    })
 }
 Player.list = {}
 Player.prototype = Object.create(Entity.prototype);
@@ -107,6 +113,7 @@ Player.onConnect = function(socket){
 }
 Player.onDisconnect = function(socket){
   delete Player.list[socket.id];
+  removePack.player.push([socket.id]);
 }
 Player.update = function() {
   let pack = [];
@@ -114,9 +121,9 @@ Player.update = function() {
     let player = Player.list[i];
     player.updatePlayer();
     pack.push({
+      id: player.id,
       x: player.x,
-      y: player.y,
-      number: player.number
+      y: player.y
     });
   }
   return pack;
@@ -131,7 +138,12 @@ function Bullet(parent, angle) {
     this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
     this.timer = 0,
     this.toRemove = false,
-    Bullet.list[this.id] = this
+    Bullet.list[this.id] = this,
+    initPack.bullet.push({
+      id:this.id,
+  		x:this.x,
+  		y:this.y,
+    })
 }
 Bullet.list = {};
 Bullet.prototype = Object.create(Entity.prototype);
@@ -157,8 +169,10 @@ Bullet.update = function() {
     bullet.updateBullet();
     if (bullet.toRemove) {
       delete Bullet.list[i];
+      removePack.bullet.push(bullet.id);
     } else {
       pack.push({
+        id: bullet.id,
         x: bullet.x,
         y: bullet.y
       });
@@ -167,10 +181,6 @@ Bullet.update = function() {
   return pack;
 }
 
-var USERS = {
-    'flora' : 'qaz',
-    'reda' : 'wsx'
-};
 const isValidPassword = function (data, cb) {
   db.Player.find({username:data.username, password:data.password}, function (err, res) {
     if (res.length>0) { cb(true);}
@@ -240,6 +250,9 @@ io.sockets.on('connection', function(socket) {
 
 });
 
+var initPack = {player:[],bullet:[]};
+var removePack = {player:[],bullet:[]};
+
 setInterval(function() {
   let pack = {
     player : Player.update(),
@@ -247,8 +260,14 @@ setInterval(function() {
   };
   for (let i in socket_List){
     let socket = socket_List[i];
-    socket.emit('newPosition', pack);
+		socket.emit('init',initPack);
+		socket.emit('update',pack);
+		socket.emit('remove',removePack);
   }
+  initPack.player = [];
+	initPack.bullet = [];
+	removePack.player = [];
+	removePack.bullet = [];
 }, 1000/25);
 
 // handling multiple players at the same time with a listen
