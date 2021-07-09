@@ -132,8 +132,17 @@
         this.number = initPack.number,
         this.x = initPack.x,
         this.y = initPack.y,
+        this.hp = initPack.hp,
+        this.hpMax = initPack.hpMax,
+        this.score = initPack.score,
         Player.list[this.id] = this
       }
+      Player.prototype.draw = function(){
+  			let hpWidth = 30 * this.hp / this.hpMax;
+  			CTX.fillRect(this.x - hpWidth/2,this.y - 40,hpWidth,4);
+  			CTX.fillText(this.number,this.x,this.y);
+        CTX.fillText(this.score,this.x,this.y-60);
+      };
       Player.list = {}
 
       function Bullet(initPack){
@@ -142,14 +151,15 @@
     		this.y = initPack.y,
     		Bullet.list[this.id] = this
     	}
+      Bullet.prototype.draw = function(){
+			  CTX.fillRect(this.x-5, this.y-5, 10, 10);
+		  }
     	Bullet.list = {};
 
       socket.on('init', function(data) {
         //{ player : [{id:123,number:'1',x:0,y:0},{id:1,number:'2',x:0,y:0}], bullet: []}
         for(var i = 0 ; i < data.player.length; i++){
     			new Player(data.player[i]);
-          console.log('checkkkk');
-          console.log(Player.list[i].id);
     		}
     		for(var i = 0 ; i < data.bullet.length; i++){
     			new Bullet(data.bullet[i]);
@@ -164,6 +174,8 @@
           if(p){
             if(pack.x !== undefined){ p.x = pack.x; }
             if(pack.y !== undefined){ p.y = pack.y; }
+            if(pack.hp !== undefined){ p.hp = pack.hp; }
+            if(pack.score !== undefined){ p.score = pack.score; }
           }
         }
         for(let i = 0 ; i < data.bullet.length; i++){
@@ -189,9 +201,9 @@
       setInterval(function(){
     		CTX.clearRect(0,0,500,500);
     		for(var i in Player.list)
-    			CTX.fillText(Player.list[i].number,Player.list[i].x,Player.list[i].y);
+    			Player.list[i].draw();
     		for(var i in Bullet.list)
-    			CTX.fillRect(Bullet.list[i].x-5,Bullet.list[i].y-5,10,10);
+    			Bullet.list[i].draw();
     	},40);
       // socket.on('newPosition', function(data) {
       //   CTX.clearRect(0,0,500,500);
