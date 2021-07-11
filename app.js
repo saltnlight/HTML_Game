@@ -29,7 +29,6 @@ function Entity() {
 Entity.prototype.updatePosition = function() {
     this.x += this.spdx;
     this.y += this.spdy;
-    this.spdx = 0; this.spdy = 0;
 };
 Entity.prototype.update = function() {
     this.updatePosition();
@@ -61,13 +60,20 @@ Player.prototype = Object.create(Entity.prototype);
 Player.prototype.constructor = Player;
 Player.prototype.updateSpeed = function(){  //rewrite
     if(this.pressingRight){
-      this.spdx = this.maxSpeed;}
-    if(this.pressingLeft){
-      this.spdx = -this.maxSpeed;}
+      this.spdx = this.maxSpeed;
+    } else if(this.pressingLeft){
+      this.spdx = -this.maxSpeed;
+    } else {
+      this.spdx = 0;
+    }
+
     if(this.pressingDown){
-      this.spdy += this.maxSpeed;}
-    if(this.pressingUp){
-      this.spdy -= this.maxSpeed;}
+      this.spdy += this.maxSpeed;
+    } else if(this.pressingUp){
+      this.spdy -= this.maxSpeed;
+    } else {
+      this.spdy = 0;
+    }
 }
 Player.prototype.updatePlayer = function(){
   this.updateSpeed();
@@ -159,8 +165,8 @@ function Bullet(parent, angle) {
     this.parent = parent,
     this.angle = angle,
     this.id = Math.random(),
-    this.spdx = Math.cos(angle/ 180 * Math.PI)*10,
-    this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
+    this.spdx = Math.cos(this.angle/ 180 * Math.PI)*5,
+    this.spdy = Math.sin(this.angle/ 180 * Math.PI)*5,
     this.timer = 0,
     this.toRemove = false,
     Bullet.list[this.id] = this,
