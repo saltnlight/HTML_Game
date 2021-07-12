@@ -176,8 +176,6 @@ Bullet.list = {};
 Bullet.prototype = Object.create(Entity.prototype);
 Bullet.prototype.constructor = Bullet;
 Bullet.prototype.updateBullet = function(){
-  this.spdx+=3;
-  this.spdy+=3;
   if(this.timer++ > 100){this.toRemove = true;}
   this.update();
   for(let i in Player.list){
