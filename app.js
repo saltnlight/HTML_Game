@@ -2,8 +2,6 @@
 const mongo = require('mongojs');
 var db = mongo('localhost:27017/myGame', ['players', 'Progress']);
 
-// db.Players.insert({username:'tester',password:'qaz'});
-
 const express = require('express');
 const app = express();
 const path = require('path');
@@ -26,12 +24,12 @@ function Entity() {
     this.spdy = 0,
     this.id = ""
 }
-Entity.prototype.updatePosition = function() {
-    this.x += this.spdx;
-    this.y += this.spdy;
-};
 Entity.prototype.update = function() {
-    this.updatePosition();
+  this.updatePosition();
+};
+Entity.prototype.updatePosition = function() {
+  this.x += this.spdx;
+  this.y += this.spdy;
 };
 Entity.prototype.getDistance = function(pt) {
   return Math.sqrt( Math.pow(this.x-pt.x, 2) + Math.pow(this.y-pt.y, 2) );
@@ -58,22 +56,22 @@ function Player(id) {
 Player.list = {}
 Player.prototype = Object.create(Entity.prototype);
 Player.prototype.constructor = Player;
-Player.prototype.updateSpeed = function(){  //rewrite
-    if(this.pressingRight){
-      this.spdx = this.maxSpeed;
-    } else if(this.pressingLeft){
-      this.spdx = -this.maxSpeed;
-    } else {
-      this.spdx = 0;
-    }
+Player.prototype.updateSpeed = function(){  //rewritten
+  if(this.pressingRight){
+    this.spdx = this.maxSpeed;
+  } else if(this.pressingLeft){
+    this.spdx = -this.maxSpeed;
+  } else {
+    this.spdx = 0;
+  }
 
-    if(this.pressingDown){
-      this.spdy += this.maxSpeed;
-    } else if(this.pressingUp){
-      this.spdy -= this.maxSpeed;
-    } else {
-      this.spdy = 0;
-    }
+  if(this.pressingDown){
+    this.spdy += this.maxSpeed;
+  } else if(this.pressingUp){
+    this.spdy -= this.maxSpeed;
+  } else {
+    this.spdy = 0;
+  }
 }
 Player.prototype.updatePlayer = function(){
   this.updateSpeed();
@@ -161,16 +159,16 @@ Player.onDisconnect = function(socket){
 }
 
 function Bullet(parent, angle) {
-    Entity.call(this);
-    this.parent = parent,
-    this.angle = angle,
-    this.id = Math.random(),
-    this.spdx = Math.cos(this.angle/ 180 * Math.PI)*5,
-    this.spdy = Math.sin(this.angle/ 180 * Math.PI)*5,
-    this.timer = 0,
-    this.toRemove = false,
-    Bullet.list[this.id] = this,
-    initPack.bullet.push(this.getInitPack())
+  Entity.call(this);
+  this.parent = parent,
+  this.angle = angle,
+  this.id = Math.random(),
+  this.spdx = Math.cos(angle/ 180 * Math.PI)*10,
+  this.spdy = Math.sin(angle/ 180 * Math.PI)*10,
+  this.timer = 0,
+  this.toRemove = false,
+  Bullet.list[this.id] = this,
+  initPack.bullet.push(this.getInitPack())
 }
 Bullet.list = {};
 Bullet.prototype = Object.create(Entity.prototype);
