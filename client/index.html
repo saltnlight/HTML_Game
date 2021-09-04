@@ -1,60 +1,65 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <title></title>
-    <style media="screen">
-      #canva {
-        width:500px;
-        height:500px;
-        border:1px solid blue;
-      }
-      #chat-text{
-        width: 500px;
-        height: 100px;
-        overflow-y: scroll;
-      }
-      input > #chat-input{
-        width: 500px;
-      }
-      /* #sign-up{color: red;} */
-    </style>
-  </head>
-  <body>
-    <section id="signDiv">
-      <div id="uNameDiv" class="">
-        Username: <input id="username" type="text" name="username" value="" required>
-      </div>
-      <div id="pWordDiv" class="">
-        Password: <input id="password" type="password" name="password" value="" required>
-      </div>
-      <div id="buttonDiv" class="">
-        <button id="sign-in" type="button" name="button">Sign In</button>
-        <button id="sign-up" type="button" name="button">Sign Up</button>
-      </div>
-    </section>
 
-    <section id="game" style="display:none; ">
-      <canvas id="canva" width="300" height="300"></canvas>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <style media="screen">
+    #canva {
+      width: 500px;
+      height: 500px;
+      border: 1px solid blue;
+    }
 
-      <div id="chat-text">
-        <p>Hello</p>
-      </div>
+    #chat-text {
+      width: 500px;
+      height: 100px;
+      overflow-y: scroll;
+    }
 
-      <form id="chat-form">
-        <input id="chat-input" type="text" name="" value="">
-      </form>
-    </section>
+    input>#chat-input {
+      width: 500px;
+    }
 
-    <section id="no-game" style="display:none; ">
-      <div class="">Sign-in unsuccessful</div>
-    </section>
+    /* #sign-up{color: red;} */
+  </style>
+</head>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script type="text/javascript">
+<body>
+  <section id="signDiv">
+    <div id="uNameDiv" class="">
+      Username: <input id="username" type="text" name="username" value="" required>
+    </div>
+    <div id="pWordDiv" class="">
+      Password: <input id="password" type="password" name="password" value="" required>
+    </div>
+    <div id="buttonDiv" class="">
+      <button id="sign-in" type="button" name="button">Sign In</button>
+      <button id="sign-up" type="button" name="button">Sign Up</button>
+    </div>
+  </section>
+
+  <section id="game" style="display:none; ">
+    <canvas id="canva" width="300" height="300"></canvas>
+
+    <div id="chat-text">
+      <p>Hello</p>
+    </div>
+
+    <form id="chat-form">
+      <input id="chat-input" type="text" name="" value="">
+    </form>
+  </section>
+
+  <section id="no-game" style="display:none; ">
+    <div class="">Sign-in unsuccessful</div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript">
 
     const socket = io();
-//***************************sign-in**********************************************
+    //***************************sign-in**********************************************
     const SIGNDIV = document.querySelector('#signDiv');
     const UNAME = document.querySelector('#username');
     const PWORD = document.querySelector('#password');
@@ -64,7 +69,7 @@
     const NOGAME = document.querySelector('#no-game');
 
     SIGNIN.onclick = function () {
-      socket.emit('signIn', {username:UNAME.value, password:PWORD.value});
+      socket.emit('signIn', { username: UNAME.value, password: PWORD.value });
     }
     socket.on('sigInResponse', function (data) {
       if (data.success) {
@@ -79,7 +84,7 @@
     });
 
     SIGNUP.onclick = function () {
-      socket.emit('signUp', {username:UNAME.value, password:PWORD.value});
+      socket.emit('signUp', { username: UNAME.value, password: PWORD.value });
     }
     socket.on('signUpResponse', function (data) {
       if (data.success) {
@@ -89,46 +94,40 @@
       }
     });
 
-//*************************chat************************************************
-      const chatText = document.querySelector('#chat-text');
-      const chatForm = document.querySelector('#chat-form');
-      const chatInput = document.querySelector('#chat-input');
+    //*************************chat************************************************
+    const chatText = document.querySelector('#chat-text');
+    const chatForm = document.querySelector('#chat-form');
+    const chatInput = document.querySelector('#chat-input');
 
-      socket.on('addToChat', function(data) {
-        let p = document.createElement("P");
-        let text = document.createTextNode(data);
-        p.appendChild(text);
-        chatText.appendChild(p);
-        // chatText.innerHTML = data;
-      });
+    socket.on('addToChat', function (data) {
+      let p = document.createElement("P");
+      let text = document.createTextNode(data);
+      p.appendChild(text);
+      chatText.appendChild(p);
+    });
 
-      socket.on('evalRes', function(data) {
-        console.log(data);
-      });
+    socket.on('evalRes', function (data) {
+      console.log(data);
+    });
 
-      chatForm.onsubmit = function(e) {
-        e.preventDefault();
-        if(chatInput.value[0] === '/'){
-          socket.emit('evalServer', chatInput.value.slice(1));
-          chatInput.value = '';
-        } else {
-          socket.emit('msgToServer', chatInput.value);
-          chatInput.value = '';
-        }
-      };
-      // chatForm.addEventListener('submit', function(e) {
-      //   e.preventDefault();
-      //   socket.emit('msgToServer', chatInput.value);
-      //   chatInput.value = '';
-      // });
+    chatForm.onsubmit = function (e) {
+      e.preventDefault();
+      if (chatInput.value[0] === '/') {
+        socket.emit('evalServer', chatInput.value.slice(1));
+        chatInput.value = '';
+      } else {
+        socket.emit('msgToServer', chatInput.value);
+        chatInput.value = '';
+      }
+    };
 
-//*************************game************************************************
-      const CANVA = document.querySelector('#canva');
-      const CTX = document.querySelector('#canva').getContext('2d');
-      CTX.font = '30px Arial';
+    //*************************game************************************************
+    const CANVA = document.querySelector('#canva');
+    const CTX = document.querySelector('#canva').getContext('2d');
+    CTX.font = '30px Arial';
 
-      function Player(initPack) {
-        this.id = initPack.id,
+    function Player(initPack) {
+      this.id = initPack.id,
         this.number = initPack.number,
         this.x = initPack.x,
         this.y = initPack.y,
@@ -136,128 +135,131 @@
         this.hpMax = initPack.hpMax,
         this.score = initPack.score,
         Player.list[this.id] = this
+    }
+    Player.prototype.draw = function () {
+      let hpWidth = 30 * this.hp / this.hpMax;
+      CTX.fillRect(this.x - hpWidth / 2, this.y - 40, hpWidth, 4);
+      CTX.fillText(this.number, this.x, this.y);
+      CTX.fillText(this.score, this.x, this.y - 60);
+    };
+    Player.list = {}
+
+    function Bullet(initPack) {
+      this.id = initPack.id,
+        this.x = initPack.x,
+        this.y = initPack.y,
+        Bullet.list[this.id] = this
+    }
+    Bullet.prototype.draw = function () {
+      CTX.fillRect(this.x - 5, this.y - 5, 10, 10);
+    }
+    Bullet.list = {};
+
+    socket.on('init', function (data) {
+      //an example of what the init pack looks like
+      //{ player : [{id:123,number:'1',x:0,y:0},{id:1,number:'2',x:0,y:0}], bullet: []}
+      for (var i = 0; i < data.player.length; i++) {
+        new Player(data.player[i]);
       }
-      Player.prototype.draw = function(){
-  			let hpWidth = 30 * this.hp / this.hpMax;
-  			CTX.fillRect(this.x - hpWidth/2,this.y - 40,hpWidth,4);
-  			CTX.fillText(this.number,this.x,this.y);
-        CTX.fillText(this.score,this.x,this.y-60);
-      };
-      Player.list = {}
+      for (var i = 0; i < data.bullet.length; i++) {
+        new Bullet(data.bullet[i]);
+      }
+    });
 
-      function Bullet(initPack){
-    		this.id = initPack.id,
-    		this.x = initPack.x,
-    		this.y = initPack.y,
-    		Bullet.list[this.id] = this
-    	}
-      Bullet.prototype.draw = function(){
-			  CTX.fillRect(this.x-5, this.y-5, 10, 10);
-		  }
-    	Bullet.list = {};
-
-      socket.on('init', function(data) {
-        //{ player : [{id:123,number:'1',x:0,y:0},{id:1,number:'2',x:0,y:0}], bullet: []}
-        for(var i = 0 ; i < data.player.length; i++){
-    			new Player(data.player[i]);
-    		}
-    		for(var i = 0 ; i < data.bullet.length; i++){
-    			new Bullet(data.bullet[i]);
-    		}
-      });
-
-      socket.on('update',function(data){
-        //{ player : [{id:123,x:0,y:0},{id:1,x:0,y:0}], bullet: []}
-        for(let i = 0 ; i < data.player.length; i++){
-          let pack = data.player[i];
-          let p = Player.list[pack.id];
-          if(p){
-            if(pack.x !== undefined){ p.x = pack.x; }
-            if(pack.y !== undefined){ p.y = pack.y; }
-            if(pack.hp !== undefined){ p.hp = pack.hp; }
-            if(pack.score !== undefined){ p.score = pack.score; }
-          }
+    socket.on('update', function (data) {
+      // example of what update pack looks like
+      //{ player : [{id:123,x:0,y:0},{id:1,x:0,y:0}], bullet: []}
+      for (let i = 0; i < data.player.length; i++) {
+        let pack = data.player[i];
+        let p = Player.list[pack.id];
+        if (p) {
+          if (pack.x !== undefined) { p.x = pack.x; }
+          if (pack.y !== undefined) { p.y = pack.y; }
+          if (pack.hp !== undefined) { p.hp = pack.hp; }
+          if (pack.score !== undefined) { p.score = pack.score; }
         }
-        for(let i = 0 ; i < data.bullet.length; i++){
-          let pack = data.bullet[i];
-          let b = Bullet.list[data.bullet[i].id];
-          if(b){
-            if(pack.x !== undefined){ b.x = pack.x; }
-            if(pack.y !== undefined){ b.y = pack.y; }
-          }
+      }
+      for (let i = 0; i < data.bullet.length; i++) {
+        let pack = data.bullet[i];
+        let b = Bullet.list[data.bullet[i].id];
+        if (b) {
+          if (pack.x !== undefined) { b.x = pack.x; }
+          if (pack.y !== undefined) { b.y = pack.y; }
         }
-      });
-
-      socket.on('remove',function(data){
-    		//{player:[12323],bullet:[12323,123123]}
-    		for(let i = 0 ; i < data.player.length; i++){
-    			delete Player.list[data.player[i]];
-    		}
-    		for(let i = 0 ; i < data.bullet.length; i++){
-    			delete Bullet.list[data.bullet[i]];
-    		}
-    	});
-
-      setInterval(function(){
-    		CTX.clearRect(0,0,500,500);
-    		for(var i in Player.list)
-    			Player.list[i].draw();
-    		for(var i in Bullet.list)
-    			Bullet.list[i].draw();
-    	},40);
-      // socket.on('newPosition', function(data) {
-      //   CTX.clearRect(0,0,500,500);
-      //   for (let i = 0; i < data.player.length; i++) {
-      //     CTX.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
-      //   }
-      //   for (let i = 0; i < data.bullet.length; i++) {
-      //     CTX.fillRect(data.bullet[i].x-2.5, data.bullet[i].y-2.5, 5, 5);
-      //   }
-      // });
-
-      // moves PLAYER notify keypress actions
-      document.onkeydown = function(e){
-          let code = e.keyCode;
-          if(code === 68) {
-            socket.emit('keyPress', {inputID:'right', state:true});
-          }
-          if(code === 83) {
-            socket.emit('keyPress', {inputID:'down', state:true});
-          }
-          if(code === 65) {
-            socket.emit('keyPress', {inputID:'left', state:true});
-          }
-          if(code === 87) {
-            socket.emit('keyPress', {inputID:'up', state:true});
-          }
       }
+    });
 
-      document.onkeyup = function(e){
-          let code = e.keyCode;
-          if(code === 68) {
-            socket.emit('keyPress', {inputID:'right', state:false});
-          }
-          if(code === 83) {
-            socket.emit('keyPress', {inputID:'down', state:false});
-          }
-          if(code === 65) {
-            socket.emit('keyPress', {inputID:'left', state:false});
-          }
-          if(code === 87) {
-            socket.emit('keyPress', {inputID:'up', state:false});
-          }
+    socket.on('remove', function (data) {
+      //{player:[12323],bullet:[12323,123123]}
+      for (let i = 0; i < data.player.length; i++) {
+        delete Player.list[data.player[i]];
       }
+      for (let i = 0; i < data.bullet.length; i++) {
+        delete Bullet.list[data.bullet[i]];
+      }
+    });
 
-      CANVA.onmousedown = function(e){socket.emit('keyPress', {inputID:'attack', state:true});}
+    setInterval(function () {
+      CTX.clearRect(0, 0, 500, 500);
+      for (var i in Player.list)
+        Player.list[i].draw();
+      for (var i in Bullet.list)
+        Bullet.list[i].draw();
+    }, 40);
+    // socket.on('newPosition', function(data) {
+    //   CTX.clearRect(0,0,500,500);
+    //   for (let i = 0; i < data.player.length; i++) {
+    //     CTX.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
+    //   }
+    //   for (let i = 0; i < data.bullet.length; i++) {
+    //     CTX.fillRect(data.bullet[i].x-2.5, data.bullet[i].y-2.5, 5, 5);
+    //   }
+    // });
 
-      CANVA.onmouseup = function(e){socket.emit('keyPress', {inputID:'attack', state:false});}
+    // moves PLAYER notify keypress actions
+    document.onkeydown = function (e) {
+      let code = e.keyCode;
+      if (code === 68) {
+        socket.emit('keyPress', { inputID: 'right', state: true });
+      }
+      if (code === 83) {
+        socket.emit('keyPress', { inputID: 'down', state: true });
+      }
+      if (code === 65) {
+        socket.emit('keyPress', { inputID: 'left', state: true });
+      }
+      if (code === 87) {
+        socket.emit('keyPress', { inputID: 'up', state: true });
+      }
+    }
 
-      CANVA.onmousemove = function(e) {
-          let x = 250 + e.clientX - 8;
-          let y = 250 + e.clientY - 8;
-          let angle = Math.atan2(y, x)/ Math.PI * 180;
-          socket.emit('keyPress', {inputID:'mouseAngle', state:angle});
-      };
-    </script>
-  </body>
+    document.onkeyup = function (e) {
+      let code = e.keyCode;
+      if (code === 68) {
+        socket.emit('keyPress', { inputID: 'right', state: false });
+      }
+      if (code === 83) {
+        socket.emit('keyPress', { inputID: 'down', state: false });
+      }
+      if (code === 65) {
+        socket.emit('keyPress', { inputID: 'left', state: false });
+      }
+      if (code === 87) {
+        socket.emit('keyPress', { inputID: 'up', state: false });
+      }
+    }
+
+    CANVA.onmousedown = function (e) { socket.emit('keyPress', { inputID: 'attack', state: true }); }
+
+    CANVA.onmouseup = function (e) { socket.emit('keyPress', { inputID: 'attack', state: false }); }
+
+    CANVA.onmousemove = function (e) {
+      let x = 250 + e.clientX - 8;
+      let y = 250 + e.clientY - 8;
+      let angle = Math.atan2(y, x) / Math.PI * 180;
+      socket.emit('keyPress', { inputID: 'mouseAngle', state: angle });
+    };
+  </script>
+</body>
+
 </html>
